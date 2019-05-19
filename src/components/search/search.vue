@@ -3,7 +3,7 @@
         <div class="search-box-wrapper">
             <search-box ref="searchBox" @query="onQueryChange"></search-box>
         </div>
-        <div class="shortcut-wrapper" v-show="!query">
+        <div ref="shortcutWrapper" class="shortcut-wrapper" v-show="!query">
             <div class="shortcut">
                 <div class="hot-key">
                     <h1 class="title">热门搜索</h1>
@@ -13,10 +13,19 @@
                         </li>
                     </ul>
                 </div>
+                <div class="search-history" v-show="searchHistory.length">
+                    <h1 class="title">
+                        <span class="text">搜索历史</span>
+                        <span class="clear" @click="deleteAll">
+                            <i class="icon-clear"></i>
+                        </span>
+                    </h1>
+                    <search-list @select="addQuery" @delete="deleteOne" :searches='searchHistory'></search-list>
+                </div>
             </div>
         </div>
-        <div class="search-result" v-show="query">
-            <suggest :query='query'></suggest>
+        <div ref="searchResult" class="search-result" v-show="query">
+            <suggest @select='saveSearch' :query='query' @listScroll="blurInput"></suggest>
         </div>
         <router-view></router-view>
     </div>
@@ -27,10 +36,15 @@ import SearchBox from 'base/search-box/search-box';
 import {getHotSearch} from 'api/search.js';
 import {ERR_OK} from 'api/config';
 import Suggest from 'components/suggest/suggest.vue';
+import SearchList from 'base/search-list/search-list';
+import {mapActions, mapGetters} from 'vuex';
+import {playlistMixin} from 'common/js/mixin';
 export default {
+    mixins: [playlistMixin],
     components: {
         SearchBox,
-        Suggest
+        Suggest,
+        SearchList
     },
     created() {
         this._getHotKey();
@@ -41,7 +55,17 @@ export default {
             query: ''
         }
     },
+    computed: {
+        ...mapGetters([
+            'searchHistory'
+        ])
+    },
     methods: {
+        handlePlaylist(playlist) {
+            const bottom = playlist.length > 0 ? '60px' : '';
+            this.$refs.shortcutWrapper.style.bottom = bottom;
+            this.$refs.searchResult.style.bottom = bottom;
+        },
         _getHotKey() {
             getHotSearch().then((res) => {
                 if(res.code === ERR_OK) {
@@ -57,7 +81,28 @@ export default {
         },
         onQueryChange(query) {
             this.query = query;
-        }
+        },
+        //监听列表滚动，调用子组件的blur方法让input输入框失去焦点
+        blurInput() {
+            this.$refs.searchBox.blur();
+        },
+        //存储搜索历史的方法(点击搜索列表执行)
+        saveSearch() {
+            this.saveSearchHistory(this.query)
+        },
+        //点击删除健执行
+        deleteOne(item) {
+            this.deleteSearchHistory(item);
+        },
+        //点击全部删除建执行
+        deleteAll() {
+            this.clearSearchHistory();
+        },
+        ...mapActions([
+            'saveSearchHistory',
+            'deleteSearchHistory',
+            'clearSearchHistory'
+        ])
     }
 }
 </script>

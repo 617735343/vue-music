@@ -24,6 +24,9 @@ const matutaions = {
     },
     [types.SET_CURRENT_INDEX](state, index) {
         state.currentIndex = index
+    },
+    [types.SET_SEARCH_HISTORY](state, history) {
+        state.searchHistory = history
     }
 }
 

@@ -1,12 +1,13 @@
 <template>
     <div class="search-box">
         <i class="icon-search"></i>
-        <input class="box" v-model="query" :placeholder="placeholder"/>
+        <input ref="query" class="box" v-model="query" :placeholder="placeholder"/>
         <i @click="clear" v-show="query" class="icon-dismiss"></i>
     </div>
 </template>
 
 <script>
+import {debounce} from 'common/js/util';
 export default {
     props: {
         placeholder: {
@@ -25,12 +26,17 @@ export default {
         },
         setQuery(query) {
             this.query = query
+        },
+        //让输入框失去焦点
+        blur() {
+            this.$refs.query.blur()
         }
     },
     created() {
-        this.$watch('query', (newQuery) => {
+        //不希望每次输入都去请求数据，所以要做截流
+        this.$watch('query', debounce((newQuery) => {
             this.$emit('query', newQuery);
-        })
+        }, 200))
     }
 }
 </script>

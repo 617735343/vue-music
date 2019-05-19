@@ -16,3 +16,19 @@ export function shuffle(arr) {
     }
     return _arr;
 }
+
+//实现截流函数
+//传进一个需要截流的函数，返回一个新的函数，这个新的函数去用定时器截流
+//如果反复的调用func就会通过定时器让他不能频繁地执行
+export function debounce(func, delay) {
+    let timer;
+
+    return function (...args) {
+        if(timer) {
+            clearTimeout(timer);
+        }
+        timer = setTimeout(() => {
+            func.apply(this, args);
+        }, delay)
+    }
+}

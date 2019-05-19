@@ -1,5 +1,5 @@
 <template>
-  <scroll @scrollToEnd="searchMore" :data="result" class="suggest" :pullup="pullup" ref="suggest">
+  <scroll @scrollToEnd="searchMore" @beforeScroll="listScroll" :data="result" class="suggest" :pullup="pullup" :beforeScroll="beforeScroll" ref="suggest" >
     <ul class="suggest-list">
       <li
         @click="selectItem(item)"
@@ -16,6 +16,9 @@
       </li>
       <loading v-show="hasMore" title></loading>
     </ul>
+    <div class="no-result-wrapper" v-show="!hasMore && !result.length">
+      <no-result title="抱歉，暂无搜索结果"></no-result>
+    </div>
   </scroll>
 </template>
 
@@ -27,8 +30,10 @@ import { createSongDisc } from "common/js/song";
 import Scroll from "base/scroll/scroll";
 import Loading from "base/loading/loading";
 import Singer from "common/js/singer";
+import NoResult from "base/no-result/no-result";
 import { mapMutations, mapActions } from "vuex";
 
+//定义歌手类型
 const TYPE_SINGER = "singer";
 //每一页返回的个数
 const perpage = 20;
@@ -50,7 +55,8 @@ export default {
       page: 1,
       result: [],
       pullup: true,
-      hasMore: true
+      hasMore: true,
+      beforeScroll: true
     };
   },
   methods: {
@@ -121,6 +127,10 @@ export default {
         }
       });
     },
+    //监听列表滚动
+    listScroll() {
+      this.$emit('listScroll');
+    },
     //检查还有没有多余的数据
     _checkMore(data) {
       const song = data.song;
@@ -149,11 +159,11 @@ export default {
             if (v.code === ERR_OK) {
                 const newsong = createSongDisc(v.req_0.data, item);
                 item.url = newsong.url;
-                
                 this.insertSong(item);
             }
         });
       }
+      this.$emit('select');
     },
     ...mapMutations({
       setSinger: "SET_SINGER"
@@ -164,7 +174,8 @@ export default {
   },
   components: {
     Scroll,
-    Loading
+    Loading,
+    NoResult
   },
   watch: {
     query() {
